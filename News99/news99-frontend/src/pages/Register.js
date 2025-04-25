@@ -12,6 +12,7 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
 
     if (!username || !email || !password) {
       setError('All fields are required.');
@@ -19,7 +20,8 @@ const Register = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/api/register', {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+      const response = await axios.post(`${apiUrl}/register`, {
         username,
         email,
         password,
