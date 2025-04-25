@@ -5,6 +5,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const path = require("path");
 const cloudinary = require("../cloudinaryConfig"); // Import Cloudinary config
+const streamifier = require('streamifier'); // Import streamifier
 
 const User = require("../models/User");
 const Job = require("../models/Job");
@@ -367,18 +368,30 @@ router.put(
   "/site-config",
   verifyToken,
   verifyAdmin,
-  upload.single("heroImage"), // Multer handles the temporary upload (e.g., to memory)
+  upload.single("heroImage"), // Multer handles the temporary upload to memory
   async (req, res) => {
     try {
       let heroImageUrl = req.body.heroImage; // Keep existing image path if no new file
 
-      // If a new file is uploaded, upload it to Cloudinary
+      // If a new file is uploaded, upload it to Cloudinary from buffer
       if (req.file) {
-        // Upload to Cloudinary using the buffer from memoryStorage
-        const result = await cloudinary.uploader.upload(req.file.path, {
-          // Optional: Add Cloudinary upload options here (e.g., folder, tags)
-          // folder: "news99_hero_images"
+        // Use a Promise to handle the stream upload
+        const uploadPromise = new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            { /* Optional: Add Cloudinary upload options */ }, 
+            (error, result) => {
+              if (result) {
+                resolve(result);
+              } else {
+                reject(error || new Error('Cloudinary upload failed'));
+              }
+            }
+          );
+          // Pipe the buffer from memory into the Cloudinary upload stream
+          streamifier.createReadStream(req.file.buffer).pipe(stream);
         });
+
+        const result = await uploadPromise; // Wait for the upload to complete
         heroImageUrl = result.secure_url; // Get the secure URL from Cloudinary
       }
 
