@@ -53,7 +53,7 @@ const {
 const { createComment, getComments } = require("../controllers/commentController");
 
 const SiteConfig = require("../models/SiteConfig");
-const upload = require("../uploads/multerConfig");
+const upload = require("../multerConfig");
 require("dotenv").config();
 
 const router = express.Router();
