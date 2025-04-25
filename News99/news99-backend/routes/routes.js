@@ -4,6 +4,7 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const path = require("path");
+const cloudinary = require("../cloudinaryConfig"); // Import Cloudinary config
 
 const User = require("../models/User");
 const Job = require("../models/Job");
@@ -366,12 +367,21 @@ router.put(
   "/site-config",
   verifyToken,
   verifyAdmin,
-  upload.single("heroImage"),
+  upload.single("heroImage"), // Multer handles the temporary upload (e.g., to memory)
   async (req, res) => {
     try {
-      // Get hero image path if file is uploaded
-      const heroImagePath = req.file ? `/uploads/${req.file.filename}` : req.body.heroImage;
-      
+      let heroImageUrl = req.body.heroImage; // Keep existing image path if no new file
+
+      // If a new file is uploaded, upload it to Cloudinary
+      if (req.file) {
+        // Upload to Cloudinary using the buffer from memoryStorage
+        const result = await cloudinary.uploader.upload(req.file.path, {
+          // Optional: Add Cloudinary upload options here (e.g., folder, tags)
+          // folder: "news99_hero_images"
+        });
+        heroImageUrl = result.secure_url; // Get the secure URL from Cloudinary
+      }
+
       // Extract other hero section fields from request body
       const { 
         heroHeadline,
@@ -384,7 +394,7 @@ router.put(
       let config = await SiteConfig.findOne({});
       if (!config) {
         config = await SiteConfig.create({ 
-          heroImage: heroImagePath,
+          heroImage: heroImageUrl, // Save Cloudinary URL
           ...(heroHeadline && { heroHeadline }),
           ...(heroSubheading && { heroSubheading }),
           ...(heroCTAText && { heroCTAText }),
@@ -392,7 +402,7 @@ router.put(
         });
       } else {
         // Update existing config with new values if provided
-        if (heroImagePath) config.heroImage = heroImagePath;
+        if (heroImageUrl) config.heroImage = heroImageUrl; // Save Cloudinary URL
         if (heroHeadline) config.heroHeadline = heroHeadline;
         if (heroSubheading) config.heroSubheading = heroSubheading;
         if (heroCTAText) config.heroCTAText = heroCTAText;
@@ -400,8 +410,9 @@ router.put(
         
         await config.save();
       }
-      res.json(config);
+      res.json(config); // Send back the updated config (with Cloudinary URL)
     } catch (err) {
+      console.error("Error updating site config:", err); // Log the error
       res.status(500).json({ message: err.message });
     }
   }
