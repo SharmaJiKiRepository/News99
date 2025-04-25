@@ -1,0 +1,325 @@
+/* Tailwind Directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global Styles */
+body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #111827; /* Match gray-900 */
+  color: #f9fafb; /* Match gray-50 */
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Add extra-small screen variant that works with Tailwind */
+@layer utilities {
+  @variants responsive {
+    /* Extra small screen utilities */
+    @media (min-width: 475px) {
+      .xs\:grid-cols-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .xs\:col-span-2 {
+        grid-column: span 2 / span 2;
+      }
+      .xs\:flex-row {
+        flex-direction: row;
+      }
+      .xs\:w-auto {
+        width: auto;
+      }
+      .xs\:mb-0 {
+        margin-bottom: 0;
+      }
+      .xs\:rounded-r-none {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+      }
+      .xs\:rounded-l-none {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+      }
+      .xs\:rounded-l-lg {
+        border-top-left-radius: 0.5rem;
+        border-bottom-left-radius: 0.5rem;
+      }
+      .xs\:rounded-r-lg {
+        border-top-right-radius: 0.5rem;
+        border-bottom-right-radius: 0.5rem;
+      }
+      .xs\:mt-0 {
+        margin-top: 0;
+      }
+      .xs\:mt-2 {
+        margin-top: 0.5rem;
+      }
+      .xs\:pl-1 {
+        padding-left: 0.25rem;
+      }
+      .xs\:text-xs {
+        font-size: 0.75rem;
+        line-height: 1rem;
+      }
+      .xs\:text-sm {
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+      }
+      .xs\:text-base {
+        font-size: 1rem;
+        line-height: 1.5rem;
+      }
+      .xs\:text-xl {
+        font-size: 1.25rem;
+        line-height: 1.75rem;
+      }
+      .xs\:py-2\.5 {
+        padding-top: 0.625rem;
+        padding-bottom: 0.625rem;
+      }
+      .xs\:px-3 {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+      }
+      .xs\:h-8 {
+        height: 2rem;
+      }
+      .xs\:w-8 {
+        width: 2rem;
+      }
+    }
+  }
+}
+
+/* Smallest text size for very small devices */
+.text-2xs {
+  font-size: 0.625rem;
+  line-height: 0.75rem;
+}
+
+/* Hero Image Animation */
+@keyframes slow-zoom {
+  0% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1.15);
+  }
+}
+
+.animate-slow-zoom {
+  animation: slow-zoom 20s ease-in-out infinite alternate;
+}
+
+/* Ensure category pages push the footer down */
+.categories-page {
+  flex-grow: 1;
+}
+
+/* Footer Fix */
+footer {
+  margin-top: auto; /* Push footer to the bottom */
+  padding: 1rem;
+  background-color: #111; /* Background color for visibility */
+  color: white;
+  text-align: center;
+}
+
+/* Carousel Fix */
+.carousel {
+  max-width: 100%;
+  overflow: hidden; /* Prevent horizontal overflow */
+}
+
+/* Spacing between sections */
+.home {
+  margin-bottom: 2rem;
+}
+
+/* Prevent extra gap on the right for containers and carousel */
+.container,
+.carousel {
+  max-width: 100%;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+/* Animation for interactive elements */
+@keyframes pulse-glow {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 3px 0 rgba(255, 0, 0, 0.7), 0 0 10px 3px rgba(255, 0, 0, 0.907);
+  }
+  50% {
+    transform: scale(1.3);
+    box-shadow: 0 0 8px 0 rgba(130, 1, 1, 0.9), 0 0 12px 4px rgba(255, 0, 0, 0.907);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 3px 0 rgba(255, 0, 0, 0.7), 0 0 10px 3px rgba(255, 0, 0, 0.907);
+  }
+}
+
+/* Slow pulse animation for CTA buttons */
+@keyframes pulse-slow {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+  }
+  50% {
+    transform: translateY(-6px) scale(1.01);
+    box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.6);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 1.5s infinite;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s ease-in-out infinite;
+}
+
+/* Navigation Dropdown Styles */
+.nav-dropdown {
+  background-color: #000;
+  border: 1px solid #333;
+  border-radius: 0.25rem;
+  z-index: 20;
+}
+.nav-dropdown a {
+  display: block;
+  padding: 0.5rem 1rem;
+  color: #fff;
+  transition: background-color 0.3s;
+}
+.nav-dropdown a:hover {
+  background-color: #e11d48; /* Tailwind red-600 */
+}
+
+/* Interactive Elements */
+.interactive:hover {
+  transform: scale(1.05);
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Responsive Design Adjustments */
+
+/* For small devices */
+@media (max-width: 640px) {
+  .job-card {
+    display: flex;
+    flex-direction: column; /* Stack job cards on smaller screens */
+    padding: 1rem;
+    width: 100%; /* Full width */
+    margin: 0 auto;
+  }
+
+  .job-card h3 {
+    font-size: 1.2rem; /* Smaller text for mobile */
+  }
+
+  .job-card-buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+/* For medium devices */
+@media (min-width: 641px) and (max-width: 768px) {
+  .job-card {
+    padding: 1.5rem;
+    width: 100%; /* Full width on medium screens */
+    margin: 0 auto;
+  }
+
+  .job-card h3 {
+    font-size: 1.4rem;
+  }
+
+  .job-card-buttons {
+    flex-direction: row;
+    gap: 1rem;
+  }
+}
+
+/* For large devices */
+@media (min-width: 769px) {
+  .job-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 2rem;
+    width: calc(100% - 1rem);
+    max-width: 400px; /* Limit width for layout improvement */
+    margin: 0 auto;
+  }
+
+  .job-card h3 {
+    font-size: 1.5rem;
+  }
+
+  /* Grid layout for job cards */
+  .job-cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+}
+
+/* For extra large devices (Desktops, Large Laptops) */
+@media (min-width: 1024px) {
+  .job-card {
+    padding: 2rem;
+    max-width: 450px; /* Improved layout on large screens */
+    margin: 0 auto;
+  }
+
+  footer {
+    font-size: 1.1rem;
+  }
+
+  .job-cards-container {
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 2rem;
+  }
+}
+
+
+@keyframes glow {
+  0% {
+    box-shadow: 0 0 5px #ff4500;
+  }
+  50% {
+    box-shadow: 0 0 20px #ff4500;
+  }
+  100% {
+    box-shadow: 0 0 5px #ff4500;
+  }
+}
+
+.glow-border {
+  animation: glow 2s infinite;
+}
+
+.glow-border:hover {
+  animation: none;
+  box-shadow: 0 0 15px #ff4500;
+}

@@ -1,0 +1,20 @@
+# Node modules
+node_modules/
+
+# Build/Production folders
+build/
+dist/
+
+# Environment variables
+.env
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Coverage (if you run tests)
+coverage/
