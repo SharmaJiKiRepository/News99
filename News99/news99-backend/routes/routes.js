@@ -6,6 +6,7 @@ const jwt = require("jsonwebtoken");
 const path = require("path");
 const cloudinary = require("../cloudinaryConfig"); // Import Cloudinary config
 const streamifier = require('streamifier'); // Import streamifier
+const { body, validationResult } = require('express-validator'); // Import validation functions
 
 const User = require("../models/User");
 const Job = require("../models/Job");
@@ -63,6 +64,15 @@ const router = express.Router();
 // ----------------------------------
 // MIDDLEWARES
 // ----------------------------------
+// Function to handle validation results
+const handleValidationErrors = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  next();
+};
+
 const verifyToken = (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) {
@@ -112,60 +122,77 @@ function optionalVerifyToken(req, res, next) {
 // ----------------------------------
 // USER AUTH ROUTES
 // ----------------------------------
-router.post("/register", async (req, res) => {
-  const { username, email, password, role = "reporter", bio = "" } = req.body;
-  if (!username || !email || !password) {
-    return res.status(400).json({ message: "All fields are required." });
-  }
-  try {
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(409).json({ message: "Email already exists." });
+router.post("/register", 
+  // Validation middleware chain
+  [
+    body('username', 'Username is required').notEmpty().trim().escape(),
+    body('email', 'Please include a valid email').isEmail().normalizeEmail(),
+    body('password', 'Password must be 6 or more characters').isLength({ min: 6 }),
+    body('role', 'Invalid role').optional().isIn(['user', 'reporter']),
+    body('bio').optional().trim().escape()
+  ],
+  handleValidationErrors, // Handle any validation errors
+  async (req, res) => {
+    // Existing logic (no need for manual checks like !username || !email anymore)
+    const { username, email, password, role = "user", bio = "" } = req.body;
+    
+    try {
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(409).json({ message: "Email already exists." });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const newUser = new User({ username, email, password: hashedPassword, role, bio });
+      await newUser.save();
+
+      res.status(201).json({
+        message: "User registered successfully.",
+        user: { id: newUser._id, username, email, role },
+      });
+    } catch (err) {
+      console.error("Registration error:", err); // Log server errors
+      res.status(500).json({ message: `Server error: ${err.message}` });
     }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ username, email, password: hashedPassword, role, bio });
-    await newUser.save();
-
-    res.status(201).json({
-      message: "User registered successfully.",
-      user: { id: newUser._id, username, email, role },
-    });
-  } catch (err) {
-    res.status(500).json({ message: `Server error: ${err.message}` });
-  }
 });
 
-router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    return res.status(400).json({ message: "Email and password are required." });
-  }
-  try {
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: "User not found." });
-    }
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: "Invalid credentials." });
-    }
+router.post("/login", 
+  // Validation middleware chain
+  [
+    body('email', 'Please include a valid email').isEmail().normalizeEmail(),
+    body('password', 'Password is required').exists()
+  ],
+  handleValidationErrors,
+  async (req, res) => {
+    // Existing logic
+    const { email, password } = req.body;
+    
+    try {
+      const user = await User.findOne({ email });
+      if (!user) {
+        return res.status(404).json({ message: "User not found." });
+      }
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        return res.status(401).json({ message: "Invalid credentials." });
+      }
 
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
-    );
-    res.status(200).json({
-      message: "Login successful.",
-      token,
-      role: user.role,
-      userId: user._id,
-      username: user.username,
-    });
-  } catch (err) {
-    res.status(500).json({ message: `Server error: ${err.message}` });
-  }
+      const token = jwt.sign(
+        { id: user._id, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: "1h" }
+      );
+      res.status(200).json({
+        message: "Login successful.",
+        token,
+        role: user.role,
+        userId: user._id,
+        username: user.username,
+      });
+    } catch (err) {
+      console.error("Login error:", err); // Log server errors
+      res.status(500).json({ message: `Server error: ${err.message}` });
+    }
 });
 
 router.get("/profile", verifyToken, async (req, res) => {

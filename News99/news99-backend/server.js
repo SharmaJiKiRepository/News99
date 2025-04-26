@@ -20,7 +20,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // ------------------------------------
 const allowedOrigins = [
   'http://localhost:3000', // Your local frontend
-  'https://news99.vercel.app'  // Your deployed frontend
+  '-+https://news99.vercel.app'  // Your deployed frontend
 ];
 
 app.use(
