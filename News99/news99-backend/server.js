@@ -20,7 +20,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // ------------------------------------
 const allowedOrigins = [
   'http://localhost:3000', // Your local frontend
-  '-+https://news99.vercel.app'  // Your deployed frontend
+  'https://news99.vercel.app'  // Your deployed frontend
 ];
 
 app.use(
@@ -58,6 +58,8 @@ mongoose
   })
   .catch((err) => {
     console.error("Database connection error:", err);
+    // Consider exiting the process if DB connection fails on startup
+    // process.exit(1); 
   });
 
 // File Upload Handling
@@ -67,6 +69,36 @@ app.post("/api/upload", upload.single("file"), (req, res) => {
     return res.status(400).json({ message: "No file uploaded." });
   }
   res.json({ filePath: `/uploads/${req.file.filename}` });
+});
+
+// === Central Error Handling Middleware ===
+// This should be defined AFTER all other app.use() and routes calls
+app.use((err, req, res, next) => {
+  console.error("[Unhandled Error]:", err.stack || err);
+  
+  // Default error status and message
+  let statusCode = err.statusCode || 500; 
+  let message = err.message || 'Internal Server Error';
+
+  // Specific error types can be handled here if needed
+  // Example: Mongoose validation error
+  if (err.name === 'ValidationError') { 
+    statusCode = 400;
+    // Combine multiple validation errors into one message
+    message = Object.values(err.errors).map(val => val.message).join(', ');
+  }
+  
+  // Example: Duplicate key error
+  if (err.code === 11000) {
+    statusCode = 409; // Conflict
+    message = `Duplicate field value entered: ${Object.keys(err.keyValue)} already exists.`;
+  }
+
+  // Send response
+  res.status(statusCode).json({
+    status: 'error',
+    message: message
+  });
 });
 
 // Server
