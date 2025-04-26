@@ -2,6 +2,25 @@
 
 const News = require("../models/News");
 const User = require("../models/User");
+const cloudinary = require('../cloudinaryConfig'); // Import Cloudinary
+const streamifier = require('streamifier'); // Import streamifier
+
+// Helper function to upload a file buffer to Cloudinary
+const uploadToCloudinary = (fileBuffer) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { /* Optional: Add Cloudinary upload options, e.g., folder: "news_uploads" */ }, 
+      (error, result) => {
+        if (result) {
+          resolve(result);
+        } else {
+          reject(error || new Error('Cloudinary upload failed'));
+        }
+      }
+    );
+    streamifier.createReadStream(fileBuffer).pipe(stream);
+  });
+};
 
 // 1) Create a news item (REPORTER or ADMIN), handling both image & video
 exports.createNews = async (req, res) => {
@@ -16,20 +35,22 @@ exports.createNews = async (req, res) => {
         .json({ message: "Title and description are required." });
     }
 
-    // If admin => auto-approve; otherwise pending
     const status = req.user.role === "admin" ? "approved" : "pending";
 
-    // If an image was uploaded, store its path
-    const imageFile =
-      req.files && req.files.image && req.files.image[0]
-        ? `/uploads/${req.files.image[0].filename}`
-        : "";
+    let imageUrl = "";
+    let videoUrl = "";
 
-    // If a video was uploaded, store its path
-    const videoFile =
-      req.files && req.files.video && req.files.video[0]
-        ? `/uploads/${req.files.video[0].filename}`
-        : "";
+    // Upload image if present
+    if (req.files && req.files.image && req.files.image[0]) {
+      const imageResult = await uploadToCloudinary(req.files.image[0].buffer);
+      imageUrl = imageResult.secure_url;
+    }
+
+    // Upload video if present
+    if (req.files && req.files.video && req.files.video[0]) {
+      const videoResult = await uploadToCloudinary(req.files.video[0].buffer);
+      videoUrl = videoResult.secure_url;
+    }
 
     // Create & save the new news doc
     const newsItem = new News({
@@ -38,8 +59,8 @@ exports.createNews = async (req, res) => {
       author: authorId,
       category: category || "General",
       youtubeLink: youtubeLink || "",
-      image: imageFile,
-      video: videoFile,
+      image: imageUrl, // Save Cloudinary URL
+      video: videoUrl, // Save Cloudinary URL
       status,
     });
 
@@ -49,7 +70,8 @@ exports.createNews = async (req, res) => {
       news: savedNews,
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("Error creating news:", err); // Log the detailed error
+    res.status(500).json({ message: `Failed to create news: ${err.message}` });
   }
 };
 
@@ -81,7 +103,7 @@ exports.getNewsById = async (req, res) => {
       return res.status(404).json({ message: "News item not found." });
     }
 
-    // If it’s approved, anyone can view it
+    // If it's approved, anyone can view it
     if (newsItem.status === "approved") {
       return res.json(newsItem);
     }
@@ -123,22 +145,30 @@ exports.updateNews = async (req, res) => {
     // Update text fields
     newsItem.title = title;
     newsItem.description = description;
-    newsItem.category = category || "General";
-    newsItem.youtubeLink = youtubeLink || newsItem.youtubeLink;
+    newsItem.category = category || newsItem.category; // Keep old if not provided
+    newsItem.youtubeLink = youtubeLink || newsItem.youtubeLink; // Keep old if not provided
 
-    // If new image was uploaded
+    // Upload new image if present
     if (req.files && req.files.image && req.files.image[0]) {
-      newsItem.image = `/uploads/${req.files.image[0].filename}`;
+      const imageResult = await uploadToCloudinary(req.files.image[0].buffer);
+      newsItem.image = imageResult.secure_url; // Save Cloudinary URL
+    } else if (req.body.image === '') { // Allow clearing the image
+       newsItem.image = '';
     }
-    // If new video was uploaded
+
+    // Upload new video if present
     if (req.files && req.files.video && req.files.video[0]) {
-      newsItem.video = `/uploads/${req.files.video[0].filename}`;
+      const videoResult = await uploadToCloudinary(req.files.video[0].buffer);
+      newsItem.video = videoResult.secure_url; // Save Cloudinary URL
+    } else if (req.body.video === '') { // Allow clearing the video
+       newsItem.video = '';
     }
 
     const updatedNews = await newsItem.save();
     res.json(updatedNews);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("Error updating news:", err); // Log the detailed error
+    res.status(500).json({ message: `Failed to update news: ${err.message}` });
   }
 };
 
