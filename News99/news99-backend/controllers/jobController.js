@@ -1,6 +1,25 @@
 // news99-backend/controllers/jobController.js
 const Job = require("../models/Job");
 const JobApplication = require("../models/JobApplication");
+const cloudinary = require('../cloudinaryConfig'); // Import Cloudinary
+const streamifier = require('streamifier'); // Import streamifier
+
+// Helper function to upload a file buffer to Cloudinary (Consider moving to a shared utils file later)
+const uploadToCloudinary = (fileBuffer, options = {}) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      options, 
+      (error, result) => {
+        if (result) {
+          resolve(result);
+        } else {
+          reject(error || new Error('Cloudinary upload failed'));
+        }
+      }
+    );
+    streamifier.createReadStream(fileBuffer).pipe(stream);
+  });
+};
 
 /*
   Exported functions:
@@ -69,45 +88,47 @@ exports.applyForJob = async (req, res) => {
 // Apply for a job WITH file upload
 exports.applyForJobWithFile = async (req, res) => {
   try {
-    // Log incoming request details
-    console.log("applyForJobWithFile - Request Body:", req.body);
-    console.log("applyForJobWithFile - Request File:", req.file);
-
     const { id } = req.params; // jobId from URL
-    const { applicantName, applicantEmail, resume } = req.body;
+    const { applicantName, applicantEmail } = req.body;
+    let finalResumeUrl = req.body.resume || ""; // Use provided link as fallback
 
-    // Trim the resume link if provided
-    const resumeLink = resume ? resume.trim() : "";
-    
-    // If a file was uploaded, build the full URL for it
-    let fileResume = "";
-    if (req.file) {
-      fileResume = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
-    }
-
-    // Validate that applicantName and applicantEmail are provided,
-    // and that at least one resume source (link or file) exists.
-    if (!applicantName || !applicantEmail || (!resumeLink && !fileResume)) {
-      return res.status(400).json({
-        message: "Applicant name, email, and either a resume link or an uploaded resume file are required.",
+    // Validate required fields before file processing
+    if (!applicantName || !applicantEmail) {
+       return res.status(400).json({
+        message: "Applicant name and email are required.",
       });
     }
+    
+    // If a file was uploaded, upload it to Cloudinary
+    if (req.file) {
+      // Specify resource_type as 'raw' or 'auto' for non-image files like PDF/DOCX
+      // You might want a specific folder for resumes
+      const result = await uploadToCloudinary(req.file.buffer, { 
+        resource_type: "raw",
+        folder: "resumes" 
+      });
+      finalResumeUrl = result.secure_url; // Use the Cloudinary URL
+    }
 
-    // Use the file URL if available; otherwise, use the resume link
-    const finalResume = fileResume || resumeLink;
+    // Ensure we have a resume URL (either from link or uploaded file)
+    if (!finalResumeUrl) {
+      return res.status(400).json({
+        message: "Either a resume link or an uploaded resume file is required.",
+      });
+    }
 
     const jobApplication = new JobApplication({
       jobId: id,
       applicantName,
       applicantEmail,
-      resume: finalResume,
+      resume: finalResumeUrl, // Save the Cloudinary URL or the provided link
     });
 
     const savedApp = await jobApplication.save();
     res.status(201).json(savedApp);
   } catch (err) {
-    console.error("Error in applyForJobWithFile:", err);
-    res.status(500).json({ message: err.message });
+    console.error("Error applying for job with file:", err);
+    res.status(500).json({ message: `Failed to apply for job: ${err.message}` });
   }
 };
 
