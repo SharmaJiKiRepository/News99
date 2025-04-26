@@ -1423,170 +1423,64 @@ const AdminDashboard = () => {
 
   // MAIN RETURN
   return (
-    <div className="bg-gray-900 min-h-screen text-white">
-      {/* Mobile Header with Menu Toggle */}
-      <div className="lg:hidden bg-gray-800 p-4 flex items-center justify-between shadow-md">
-        <h1 className="text-xl font-bold">Admin Dashboard</h1>
-        <button 
-          onClick={toggleSidebar} 
-          className="p-2 rounded-md bg-gray-700 hover:bg-gray-600 transition-colors"
-        >
-          {sidebarOpen ? <FiX size={20} /> : <FiMenu size={20} />}
-        </button>
-      </div>
+    <div className="flex h-screen bg-gray-900 text-gray-100">
+      {/* Mobile Sidebar Toggle Button */}
+      <button 
+        onClick={toggleSidebar} 
+        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-gray-800 rounded text-white"
+      >
+        {sidebarOpen ? <FiX /> : <FiMenu />}
+      </button>
 
-      <div className="flex flex-col lg:flex-row">
-        {/* Sidebar - Fixed on desktop, slide-in on mobile */}
-        <aside 
-          className={`bg-gray-800 lg:w-64 fixed lg:static inset-y-0 left-0 transform ${
-            sidebarOpen ? "translate-x-0" : "-translate-x-full"
-          } lg:translate-x-0 transition-transform duration-300 ease-in-out z-30 overflow-y-auto h-full`}
-        >
-          <div className="p-4 border-b border-gray-700 hidden lg:block">
-            <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-          </div>
-          
-          {/* Admin Navigation */}
-          <nav className="p-4">
-            <ul className="space-y-1">
-              <li>
-                <button
-                  onClick={() => handleSectionChange("users")}
-                  className={`w-full flex items-center p-3 rounded-md ${
-                    activeSection === "users" ? "bg-red-600" : "hover:bg-gray-700"
-                  }`}
-                >
-                  <FiUsers className="mr-3" />
-                  Users
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => handleSectionChange("reporterRequests")}
-                  className={`w-full flex items-center p-3 rounded-md ${
-                    activeSection === "reporterRequests" ? "bg-red-600" : "hover:bg-gray-700"
-                  }`}
-                >
-                  <FiUserCheck className="mr-3" />
-                  Reporter Requests
-                  {reporterRequests.length > 0 && (
-                    <span className="ml-auto bg-red-500 text-white rounded-full h-5 w-5 flex items-center justify-center text-xs">
-                      {reporterRequests.length}
-                    </span>
-                  )}
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => handleSectionChange("jobs")}
-                  className={`w-full flex items-center p-3 rounded-md ${
-                    activeSection === "jobs" ? "bg-red-600" : "hover:bg-gray-700"
-                  }`}
-                >
-                  <FiBriefcase className="mr-3" />
-                  Jobs Management
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => handleSectionChange("applications")}
-                  className={`w-full flex items-center p-3 rounded-md ${
-                    activeSection === "applications" ? "bg-red-600" : "hover:bg-gray-700"
-                  }`}
-                >
-                  <FiInbox className="mr-3" />
-                  Job Applications
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => handleSectionChange("news")}
-                  className={`w-full flex items-center p-3 rounded-md ${
-                    activeSection === "news" ? "bg-red-600" : "hover:bg-gray-700"
-                  }`}
-                >
-                  <FiFileText className="mr-3" />
-                  News Management
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => handleSectionChange("tasks")}
-                  className={`w-full flex items-center p-3 rounded-md ${
-                    activeSection === "tasks" ? "bg-red-600" : "hover:bg-gray-700"
-                  }`}
-                >
-                  <FiCheckSquare className="mr-3" />
-                  Tasks
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => handleSectionChange("messages")}
-                  className={`w-full flex items-center p-3 rounded-md ${
-                    activeSection === "messages" ? "bg-red-600" : "hover:bg-gray-700"
-                  }`}
-                >
-                  <FiMail className="mr-3" />
-                  Messages
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => handleSectionChange("config")}
-                  className={`w-full flex items-center p-3 rounded-md ${
-                    activeSection === "config" ? "bg-red-600" : "hover:bg-gray-700"
-                  }`}
-                >
-                  <FiSettings className="mr-3" />
-                  Site Config
-                </button>
-              </li>
-            </ul>
-          </nav>
-        </aside>
+      {/* Sidebar */}
+      <aside 
+        className={`fixed inset-y-0 left-0 z-40 w-64 bg-gray-800 p-6 space-y-6 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 transition-transform duration-300 ease-in-out overflow-y-auto`}
+      >
+        <h2 className="text-2xl font-semibold text-white">Admin Panel</h2>
+        <nav className="space-y-2">
+          {/* Sidebar Links - use handleSectionChange onClick */}
+          <SidebarLink section="users" activeSection={activeSection} onClick={handleSectionChange} icon={<FiUsers />}>Manage Users</SidebarLink>
+          <SidebarLink section="jobs" activeSection={activeSection} onClick={handleSectionChange} icon={<FiBriefcase />}>Manage Jobs</SidebarLink>
+          <SidebarLink section="applications" activeSection={activeSection} onClick={handleSectionChange} icon={<FiInbox />}>Job Applications</SidebarLink>
+          <SidebarLink section="reporterRequests" activeSection={activeSection} onClick={handleSectionChange} icon={<FiUserCheck />}>Reporter Requests</SidebarLink>
+          <SidebarLink section="news" activeSection={activeSection} onClick={handleSectionChange} icon={<FiFileText />}>Manage News</SidebarLink>
+          <SidebarLink section="tasks" activeSection={activeSection} onClick={handleSectionChange} icon={<FiCheckSquare />}>Manage Tasks</SidebarLink>
+          <SidebarLink section="messages" activeSection={activeSection} onClick={handleSectionChange} icon={<FiMail />}>Contact Messages</SidebarLink>
+          <SidebarLink section="config" activeSection={activeSection} onClick={handleSectionChange} icon={<FiSettings />}>Site Config</SidebarLink>
+        </nav>
+      </aside>
 
-        {/* Backdrop for mobile sidebar */}
-        {sidebarOpen && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
-            onClick={toggleSidebar}
-          ></div>
+      {/* Main Content Area */}
+      <main className="flex-1 p-6 md:p-10 overflow-y-auto">
+        {/* Conditional rendering based on activeSection */}
+        {loading && <p>Loading...</p>}
+        {error && <p className="text-red-500">{error}</p>}
+        {!loading && !error && (
+          <>
+            {activeSection === "users" && renderUsersSection()}
+            {activeSection === "jobs" && renderJobsSection()}
+            {activeSection === "applications" && renderApplicationsSection()}
+            {activeSection === "reporterRequests" && renderReporterRequests()}
+            {activeSection === "news" && renderNewsSection()}
+            {activeSection === "tasks" && renderTasksSection()}
+            {activeSection === "messages" && renderMessagesSection()}
+            {activeSection === "config" && renderConfigSection()}
+          </>
         )}
-
-        {/* Main Content */}
-        <main className="flex-1 p-4 lg:p-8">
-          <div className="mb-6 text-center lg:text-left">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-              News99 Admin Portal
-            </h1>
-            <p className="text-lg text-gray-300">
-              Welcome, Admin! Manage users, jobs, applications, news, tasks, and more.
-            </p>
-          </div>
-          {loading ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-500"></div>
-            </div>
-          ) : error ? (
-            <div className="bg-red-900 text-white p-4 rounded-md">{error}</div>
-          ) : (
-            <>
-              {/* Dynamic Section Content */}
-              {activeSection === "users" && renderUsersSection()}
-              {activeSection === "reporterRequests" && renderReporterRequests()}
-              {activeSection === "jobs" && renderJobsSection()}
-              {activeSection === "applications" && renderApplicationsSection()}
-              {activeSection === "news" && renderNewsSection()}
-              {activeSection === "tasks" && renderTasksSection()}
-              {activeSection === "messages" && renderMessagesSection()}
-              {activeSection === "config" && renderConfigSection()}
-            </>
-          )}
-        </main>
-      </div>
+      </main>
     </div>
   );
 };
+
+// Helper component for sidebar links (optional but good practice)
+const SidebarLink = ({ section, activeSection, onClick, icon, children }) => (
+  <button 
+    onClick={() => onClick(section)} 
+    className={`flex items-center w-full px-4 py-2 rounded transition-colors duration-200 ${activeSection === section ? 'bg-purple-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`}
+  >
+    <span className="mr-3">{icon}</span>
+    {children}
+  </button>
+);
 
 export default AdminDashboard;
